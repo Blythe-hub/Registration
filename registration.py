@@ -25,54 +25,78 @@ import sys
 class Node:
     """Represents a node in a singly linked list."""
     def __init__(self, data, next=None):
+        """Initialize node with data and optional next link."""
         self.data = data
         self.next = next
 
 class StackError(Exception):
+    """Exception raised for Stack errors."""
     pass
 
 class Stack:
+    """Implements a stack using a linked list."""
     def __init__(self):
+        """Initialize an empty stack."""
         self._top = None
         self._size = 0
+
     def is_empty(self):
+        """Return True if the stack is empty."""
         return self._top is None
+
     def push(self, item):
+        """Push an item onto the stack."""
         self._top = Node(item, self._top)
         self._size += 1
+
     def pop(self):
+        """Remove and return the top item from the stack."""
         if self.is_empty():
             raise StackError("Pop from empty stack.")
         item = self._top.data
         self._top = self._top.next
         self._size -= 1
         return item
+
     def peek(self):
+        """Return the top item without removing it."""
         if self.is_empty():
             raise StackError("Peek from empty stack.")
         return self._top.data
+
     def size(self):
+        """Return the number of items in the stack."""
         return self._size
 
 class QueueError(Exception):
+    """Exception raised for Queue errors."""
     pass
 
 class Queue:
+    """Implements a queue using a linked list."""
     def __init__(self):
+        """Initialize an empty queue."""
         self._front = None
         self._rear = None
         self._size = 0
+
     def is_empty(self):
+        """Return True if the queue is empty."""
         return self._size == 0
+
     def enqueue(self, item):
+        """Add an item to the rear of the queue."""
         node = Node(item)
         if self.is_empty():
-            self._front = self._rear = node
+            self._front = node
+            self._rear = node
         else:
             self._rear.next = node
             self._rear = node
         self._size += 1
+
     def dequeue(self):
+        """Remove and return the front item of the queue."""
         if self.is_empty():
             raise QueueError("Dequeue from empty queue.")
         data = self._front.data
@@ -81,94 +105,119 @@ class Queue:
             self._rear = None
         self._size -= 1
         return data
+
     def peek(self):
+        """Return the front item without removing it."""
         if self.is_empty():
             raise QueueError("Peek from empty queue.")
         return self._front.data
+
     def size(self):
+        """Return the number of items in the queue."""
         return self._size
 
 class Vertex:
-    """Vertex Class with label, visited flag, and depth property."""
+    """Represents a course vertex with label, visited flag, and depth."""
     def __init__(self, label):
+        """Initialize vertex with a label and default depth."""
         self.__label = label
         self.__visited = False
         self.__depth = -1
+
     @property
     def label(self):
+        """Return the label of the vertex."""
         return self.__label
+
     @property
     def visited(self):
+        """Return True if the vertex has been visited."""
         return self.__visited
+
     @visited.setter
     def visited(self, value):
+        """Set the visited flag of the vertex."""
         if not isinstance(value, bool):
             raise ValueError("Visited must be boolean.")
         self.__visited = value
+
     @property
     def depth(self):
+        """Return the computed depth of the vertex."""
         return self.__depth
+
     @depth.setter
     def depth(self, value):
+        """Set the computed depth of the vertex."""
         if not isinstance(value, int):
             raise ValueError("Depth must be integer.")
         self.__depth = value
+
     def __str__(self):
+        """Return string representation of the vertex."""
         return str(self.__label)
 
 class Graph:
-    """A Class to represent a directed graph of courses."""
+    """Represents a directed graph of course prerequisites."""
     def __init__(self):
-        self.vertices = []            # list of Vertex
-        self.adjacency_matrix = []    # 2D list
+        """Initialize an empty graph."""
+        self.vertices = []
+        self.adjacency_matrix = []
+
     def has_vertex(self, label):
+        """Return True if a vertex with the given label exists."""
         return any(v.label == label for v in self.vertices)
+
     def get_index(self, label):
+        """Return the index of the vertex with the given label, or -1."""
         for i, v in enumerate(self.vertices):
             if v.label == label:
                 return i
         return -1
+
     def add_vertex(self, label):
-        if self.has_vertex(label): return
+        """Add a new vertex with the given label."""
+        if self.has_vertex(label):
+            return
         self.vertices.append(Vertex(label))
-        # expand adjacency matrix
         n = len(self.vertices)
         for row in self.adjacency_matrix:
             row.append(0)
-        self.adjacency_matrix.append([0]*n)
+        self.adjacency_matrix.append([0] * n)
+
     def add_edge(self, start, finish):
+        """Add a directed edge from start index to finish index."""
         self.adjacency_matrix[start][finish] = 1
+
     def get_adjacent_vertices(self, idx):
+        """Return list of indices of vertices adjacent from vertex idx."""
         return [j for j, val in enumerate(self.adjacency_matrix[idx]) if val]
 
     def compute_depth(self):
-        """Compute longest prerequisite chain depth for each vertex."""
+        """Compute the depth (longest downstream chain) for each vertex."""
         n = len(self.vertices)
         def dfs(i):
             v = self.vertices[i]
             if v.depth >= 0:
                 return v.depth
-            maxd = 0
-            for j in self.get_adjacent_vertices(i):
-                d = 1 + dfs(j)
-                if d > maxd: maxd = d
-            v.depth = maxd
-            return maxd
+            depths = [1 + dfs(j) for j in self.get_adjacent_vertices(i)] or [0]
+            v.depth = max(depths)
+            return v.depth
         for i in range(n):
             dfs(i)
 
     def has_cycle(self):
-        """Detect cycle via DFS with recursion stack."""
+        """Return True if the graph has a cycle, else False."""
         n = len(self.vertices)
-        visited = [False]*n
-        recstack = [False]*n
+        visited = [False] * n
+        recstack = [False] * n
         def dfs(i):
             visited[i] = True
             recstack[i] = True
             for j in self.get_adjacent_vertices(i):
-                if not visited[j]:
-                    if dfs(j): return True
-                elif recstack[j]:
+                if not visited[j] and dfs(j):
+                    return True
+                if recstack[j]:
                     return True
             recstack[i] = False
             return False
@@ -178,58 +227,55 @@ class Graph:
         return False
 
     def get_registration_plan(self):
-        """Return a 2D list of course labels, max 4 per semester."""
+        """Return a valid registration plan as list of semesters (max 4 courses each)."""
         n = len(self.vertices)
         if n == 0:
             return []
-        # compute depths
         self.compute_depth()
-        # compute in-degrees
-        in_degree = [0]*n
+        in_degree = [0] * n
         for u in range(n):
             for v in self.get_adjacent_vertices(u):
                 in_degree[v] += 1
-        scheduled = [False]*n
+        scheduled = [False] * n
         plan = []
         remain = n
         while remain > 0:
-            available = [i for i in range(n) if in_degree[i]==0 and not scheduled[i]]
-            # sort by depth descending
+            available = [i for i in range(n) if in_degree[i] == 0 and not scheduled[i]]
             available.sort(key=lambda x: self.vertices[x].depth, reverse=True)
-            # take up to 4
             sem = available[:4]
             if not sem:
                 break
-            # mark scheduled and update in-degrees
             for i in sem:
                 scheduled[i] = True
-            for i in sem:
                 for j in self.get_adjacent_vertices(i):
                     in_degree[j] -= 1
-            # append labels
             plan.append([self.vertices[i].label for i in sem])
             remain -= len(sem)
         return plan
 
 def main():
+    """Read input, build graph, and print registration plan or cycle detection."""
     graph = Graph()
     data = sys.stdin.read().splitlines()
     idx = 0
-    # number of vertices
-    num_v = int(data[idx].strip()); idx+=1
+    num_v = int(data[idx].strip())
+    idx += 1
     for _ in range(num_v):
-        label = data[idx].strip(); idx+=1
+        label = data[idx].strip()
         graph.add_vertex(label)
-    num_e = int(data[idx].strip()); idx+=1
+        idx += 1
+    num_e = int(data[idx].strip())
+    idx += 1
     for _ in range(num_e):
-        parts = data[idx].split(); idx+=1
-        u = graph.get_index(parts[0]); v = graph.get_index(parts[1])
+        parts = data[idx].split()
+        u = graph.get_index(parts[0])
+        v = graph.get_index(parts[1])
         graph.add_edge(u, v)
+        idx += 1
     if graph.has_cycle():
         print("Registration plan invalid because a cycle was detected.")
     else:
         print("Valid registration plan detected.")
-        graph.compute_depth()
         plan = graph.get_registration_plan()
         print()
         print("Registration plan: ")
