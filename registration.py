@@ -25,6 +25,7 @@ class Node:
 
 class StackError(Exception):
     """Exception raised for Stack errors."""
+    pass
 
 class Stack:
     """Implements a stack using a linked list."""
@@ -63,6 +64,7 @@ class Stack:
 
 class QueueError(Exception):
     """Exception raised for Queue errors."""
+    pass
 
 class Queue:
     """Implements a queue using a linked list."""
@@ -271,5 +273,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-'''
-with open("registration.py
