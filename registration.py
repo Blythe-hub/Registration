@@ -28,6 +28,7 @@ class Node:
         self.next = next
 
 class StackError(Exception):
+    pass
 
 class Stack:
     def __init__(self):
@@ -53,6 +54,7 @@ class Stack:
         return self._size
 
 class QueueError(Exception):
+    pass
 
 class Queue:
     def __init__(self):
